@@ -11,6 +11,8 @@ func StartServer() {
 	Customer(router)
 	//product route
 	Product(router)
+	//cart route
+	Cart(router)
 
 	router.Run()
 }

@@ -7,3 +7,18 @@ type CartItemDto struct {
 	ProductID  int    `json:"product_id"`  // ID ของสินค้า
 	Quantity   int    `json:"quantity"`    // จำนวนสินค้าในรถเข็น
 }
+
+type CartItemDetails struct {
+	ProductID   int     `json:"product_id"`
+	ProductName string  `json:"product_name"`
+	Description string  `json:"description"`
+	Quantity    int     `json:"quantity"`
+	Price       float64 `json:"price"`
+	TotalPrice  float64 `json:"total_price"`
+}
+
+type CartDetails struct {
+	CartID   int               `json:"cart_id"`
+	CartName string            `json:"cart_name"`
+	Items    []CartItemDetails `json:"items"`
+}
