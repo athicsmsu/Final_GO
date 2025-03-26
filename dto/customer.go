@@ -15,3 +15,14 @@ type CustomerDto struct {
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
+
+type UpdateAddressDto struct {
+	Email   string `json:"email"`
+	Address string `json:"address"`
+}
+
+type UpdatePasswordDto struct {
+	Email       string `json:"email"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}

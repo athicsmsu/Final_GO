@@ -7,8 +7,10 @@ func StartServer() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	//person route
+	//customer route
 	Customer(router)
+	//product route
+	Product(router)
 
 	router.Run()
 }

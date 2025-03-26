@@ -30,9 +30,9 @@ func getConnection() (*sql.DB, error) {
 func Customer(router *gin.Engine) {
 	routes := router.Group("/customer")
 	{
-		// routes.GET("/", getAllCustomer)
 		routes.POST("/auth/login", Login)
-		// routes.GET("/:name", getCustomerName)
+		routes.PUT("/update-address", UpdateAddress)
+		routes.PUT("/update-password", UpdatePassword)
 	}
 }
 func Login(c *gin.Context) {
@@ -82,4 +82,82 @@ func Login(c *gin.Context) {
 	copier.Copy(&customerData, &customer)
 
 	c.JSON(200, gin.H{"customer": customerData})
+}
+func UpdateAddress(c *gin.Context) {
+	request := dto.UpdateAddressDto{}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	db, err := getConnection()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Database connection failed"})
+		return
+	}
+	defer db.Close()
+
+	// อัปเดตที่อยู่ของลูกค้า
+	query := "UPDATE customer SET address = ? WHERE email = ?"
+	result, err := db.Exec(query, request.Address, request.Email)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	// ตรวจสอบว่ามีแถวที่ถูกอัปเดตหรือไม่
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(404, gin.H{"message": "Customer not found"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Address updated successfully"})
+}
+
+func UpdatePassword(c *gin.Context) {
+	// รับค่า email, oldPassword, newPassword จากผู้ใช้ และเก็บไว้ในตัวแปร request
+	var request = dto.UpdatePasswordDto{}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	db, err := getConnection()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Database connection failed"})
+		return
+	}
+	defer db.Close()
+
+	// ดึงข้อมูลรหัสผ่านปัจจุบันจากฐานข้อมูล
+	var storedPassword string
+	query := "SELECT password FROM customer WHERE email = ?"
+	err = db.QueryRow(query, request.Email).Scan(&storedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(404, gin.H{"message": "Customer not found"})
+		} else {
+			c.JSON(500, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	// ตรวจสอบว่ารหัสผ่านเก่าถูกต้องหรือไม่
+	if request.OldPassword != storedPassword {
+		c.JSON(401, gin.H{"message": "Old password is incorrect"})
+		return
+	}
+
+	// อัปเดตรหัสผ่านใหม่
+	updateQuery := "UPDATE customer SET password = ? WHERE email = ?"
+	_, err = db.Exec(updateQuery, request.NewPassword, request.Email)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Password updated successfully"})
 }
